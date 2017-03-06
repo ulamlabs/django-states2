@@ -65,18 +65,18 @@ class StateField(models.CharField):
         else:
             log_model = None
 
-        setattr(cls, '_%s_log_model' % name, log_model)
+        setattr(cls, '_{}_log_model'.format(name), log_model)
 
         # adding extra methods
-        setattr(cls, 'get_%s_display' % name,
+        setattr(cls, 'get_{}_display'.format(name),
             curry(get_STATE_display, field=name, machine=self._machine))
-        setattr(cls, 'get_%s_transitions' % name,
+        setattr(cls, 'get_{}_transitions'.format(name),
             curry(get_STATE_transitions, field=name))
-        setattr(cls, 'get_public_%s_transitions' % name,
+        setattr(cls, 'get_public_{}_transitions'.format(name),
             curry(get_public_STATE_transitions, field=name))
-        setattr(cls, 'get_%s_info' % name,
+        setattr(cls, 'get_{}_info'.format(name),
             curry(get_STATE_info, field=name, machine=self._machine))
-        setattr(cls, 'get_%s_machine' % name,
+        setattr(cls, 'get_{}_machine'.format(name),
             curry(get_STATE_machine, field=name, machine=self._machine))
 
         models.signals.class_prepared.connect(self.finalize, sender=cls)

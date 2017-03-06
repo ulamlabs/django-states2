@@ -43,7 +43,7 @@ def make_state_transition(request):
                 kwargs[p[len('kwargs-')-1:]] = request.POST[p]
 
         if not hasattr(instance, 'make_transition'):
-            raise Exception('No such state model "%s"' % model_name)
+            raise Exception('No such state model "{}"'.format(model_name))
 
         try:
             # Make state transition
