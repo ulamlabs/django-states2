@@ -107,10 +107,10 @@ html_theme = 'alabaster'
 title_dict = {'project': project,
               'version': version,
               'release': release}
-html_title = "%(project)s v%(release)s documentation" % title_dict
+html_title = "{project} v{release} documentation".format(**title_dict)
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = "%(project)s v%(version)s" % title_dict
+html_short_title = "{project} v{version}".format(**title_dict)
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.

@@ -16,8 +16,8 @@ def get_STATE_transitions(self, field='state'):
 
     :param str field: the name of the :class:`~django_states.fields.StateField`
     """
-    if getattr(self, '_%s_log_model' % field, None):
-        LogModel = getattr(self, '_%s_log_model' % field, None)
+    if getattr(self, '_{}_log_model'.format(field), None):
+        LogModel = getattr(self, '_{}_log_model'.format(field), None)
         return LogModel.objects.filter(on=self)
     else:
         raise Exception('This model does not log state transitions. '
@@ -31,8 +31,8 @@ def get_public_STATE_transitions(self, field='state'):
 
     :param str field: the name of the :class:`~django_states.fields.StateField`
     """
-    if getattr(self, '_%s_log_model' % field, None):
-        transitions = getattr(self, 'get_%s_transitions' % field)
+    if getattr(self, '_{}_log_model'.format(field), None):
+        transitions = getattr(self, 'get_{}_transitions'.format(field))
         return [t for t in transitions() if t.is_public and t.completed]
     else:
         return []
@@ -165,7 +165,7 @@ def get_STATE_info(self, field='state', machine=None):
                 raise UnknownTransition(self, transition)
             t = machine.get_transitions(transition)
 
-            _state_log_model = getattr(self, '_%s_log_model' % field, None)
+            _state_log_model = getattr(self, '_{}_log_model'.format(field), None)
 
             # Start transition log
             if _state_log_model:

@@ -33,16 +33,16 @@ class Command(BaseCommand):
             self.render_for_model(model_label, **options)
 
     def render_for_model(self, model_label, **options):
-        app_label,model,field = model_label.split('.')
+        app_label, model, field = model_label.split('.')
         try:
             Model = get_model(app_label, model)
         except LookupError:
             Model = None
-        STATE_MACHINE = getattr(Model(), 'get_%s_machine' % field)()
+        STATE_MACHINE = getattr(Model(), 'get_{}_machine'.format(field))()
 
         name = six.text_type(Model._meta.verbose_name)
-        g = Graph('state_machine_graph_%s' % model_label, False)
-        g.label = 'State Machine Graph %s' % name
+        g = Graph('state_machine_graph_{}'.format(model_label), False)
+        g.label = 'State Machine Graph {}'.format(name)
         nodes = {}
         edges = {}
 
@@ -51,7 +51,7 @@ class Command(BaseCommand):
                                       label=state.upper(),
                                       shape='rect',
                                       fontname='Arial')
-            logger.debug('Created node for %s', state)
+            logger.debug('Created node for {}'.format(state))
 
         def find(f, a):
             for i in a:
@@ -69,8 +69,8 @@ class Command(BaseCommand):
 
                 if getattr(trion, 'confirm_needed', False):
                     edge.style = 'dotted'
-                edges[u'%s-->%s' % (from_state, trion.to_state)] = edge
-            logger.debug('Created %d edges for %s', len(trion.from_states), trion.get_name())
+                edges['{}-->{}'.format(from_state, trion.to_state)] = edge
+            logger.debug('Created {} edges for {}'.format(len(trion.from_states), trion.get_name()))
 
             #if trion.next_function_name is not None:
             #    tr = find(lambda t: t.function_name == trion.next_function_name and t.from_state == trion.to_state, STATE_MACHINE.trions)
@@ -89,15 +89,15 @@ class Command(BaseCommand):
             #    edge.color = 'red'
             #    edge.style = 'dashed'
             #    edge.label += '\n(auto)'
-        logger.info('Creating state graph for %s with %d nodes and %d edges' % (name, len(nodes), len(edges)))
+        logger.info('Creating state graph for {} with {} nodes and {} edges'.format(name, len(nodes), len(edges)))
 
-        loc = 'state_machine_%s' % (model_label,)
+        loc = 'state_machine_{}'.format(model_label)
         if options['create_dot']:
-            g.write('%s.dot' % loc)
+            g.write('{}.dot'.format(loc))
 
-        logger.debug('Setting layout %s' % options['layout'])
+        logger.debug('Setting layout {}'.format(options['layout']))
         g.layout(options['layout'])
         format = options['format']
-        logger.debug('Trying to render %s' % loc)
+        logger.debug('Trying to render {}'.format(loc))
         g.render(loc + '.' + format, format, None)
-        logger.info('Created state graph for %s at %s' % (name, loc))
+        logger.info('Created state graph for {} at {}'.format(name, loc))

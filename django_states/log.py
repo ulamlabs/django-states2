@@ -79,20 +79,20 @@ def _create_state_log_model(state_model, field_name, machine):
         """
         def __new__(c, name, bases, attrs):
 
-            new_unicode = u''
-            if '__unicode__' in attrs:
-                old_unicode = attrs['__unicode__']
+            new_unicode = ''
+            if '__str__' in attrs:
+                old_unicode = attrs['__str__']
 
                 def new_unicode(self):
                     """New Unicode"""
-                    return u'%s (%s)' % (old_unicode(self), self.get_state_info().description)
+                    return '{} ({})'.format(old_unicode(self), self.get_state_info().description)
 
-            attrs['__unicode__'] = new_unicode
+            attrs['__str__'] = new_unicode
 
             attrs['__module__'] = state_model.__module__
             values = {'model_name': state_model.__name__,
                       'field_name': field_name.capitalize()}
-            class_name = conf.LOG_MODEL_NAME % values
+            class_name = conf.LOG_MODEL_NAME.format(**values)
 
             # Make sure that for Python2, class_name is a 'str' object.
             # In Django 1.7, `field_name` returns a unicode object, causing
@@ -117,19 +117,28 @@ def _create_state_log_model(state_model, field_name, machine):
         from_state = models.CharField(max_length=100,
                                       choices=get_state_choices())
         to_state = models.CharField(max_length=100, choices=get_state_choices())
-        user = models.ForeignKey(getattr(settings, 'AUTH_USER_MODEL', 'auth.User'), on_delete=models.CASCADE,
-                                 blank=True, null=True)
+
+        user = models.ForeignKey(
+            getattr(settings, 'AUTH_USER_MODEL', 'auth.User'),
+            blank=True,
+            null=True,
+            on_delete=models.CASCADE
+        )
         serialized_kwargs = models.TextField(blank=True)
 
         start_time = models.DateTimeField(
             auto_now_add=True, db_index=True,
             verbose_name=_('transition started at')
         )
-        on = models.ForeignKey(state_model, on_delete=models.CASCADE, related_name=('%s_history' % field_name))
+        on = models.ForeignKey(
+            state_model,
+            related_name=('{}_history'.format(field_name)),
+            on_delete=models.CASCADE
+        )
 
         class Meta:
             """Non-field Options"""
-            verbose_name = '%s transition' % state_model._meta.verbose_name
+            verbose_name = '{} transition'.format(state_model._meta.verbose_name)
 
             # When the state class has been given an app_label, use
             # use this app_label as well for this StateTransition model.
