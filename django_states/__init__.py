@@ -9,7 +9,7 @@ from __future__ import absolute_import
 from six.moves import map
 
 #: The version list
-VERSION = (1, 6, 4)
+VERSION = (1, 7, 0)
 
 #: The actual version number, used by python (and shown in sentry)
 __version__ = '.'.join(map(str, VERSION))
