@@ -44,12 +44,12 @@ class StateModelBase(ModelBase):
                                         machine=attrs['Machine'])
 
         # Wrap __unicode__ for state model
-        if '__unicode__' in attrs:
-            old_unicode = attrs['__unicode__']
+        if '__str__' in attrs:
+            old_unicode = attrs['__str__']
 
             def new_unicode(self):
-                return '%s (%s)' % (old_unicode(self), self.Machine.get_state(self.state).description)
-            attrs['__unicode__'] = new_unicode
+                return '{} ({})'.format((old_unicode(self), self.Machine.get_state(self.state).description))
+            attrs['__str__'] = new_unicode
 
         # Call class constructor of parent
         return ModelBase.__new__(cls, name, bases, attrs)
@@ -135,7 +135,7 @@ class StateModel(six.with_metaclass(StateModelBase, models.Model)):
         """
         Gets the state model
         """
-        return '%s.%s' % (self._meta.app_label, self._meta.object_name)
+        return '{}.{}'.format(self._meta.app_label, self._meta.object_name)
 
     def can_make_transition(self, transition, user=None):
         """

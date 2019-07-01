@@ -32,9 +32,9 @@ class StateMachineMeta(type):
             # addressable by Machine.states
             if isinstance(attrs[a], StateDefinitionMeta):
                 states[a] = attrs[a]
-                logger.debug('Found state: %s' % states[a].get_name())
+                logger.debug('Found state: {}'.format(states[a].get_name()))
                 if states[a].initial:
-                    logger.debug('Found initial state: %s' % states[a].get_name())
+                    logger.debug('Found initial state: {}'.format(states[a].get_name()))
                     if not initial_state:
                         initial_state = a
                     else:
@@ -44,13 +44,13 @@ class StateMachineMeta(type):
             # addressable by Machine.transitions
             if isinstance(attrs[a], StateTransitionMeta):
                 transitions[a] = attrs[a]
-                logger.debug('Found state transition: %s' % transitions[a].get_name())
+                logger.debug('Found state transition: {}'.format(transitions[a].get_name()))
 
             # All definitions derived from StateGroup
             # should be addressable by Machine.groups
             if isinstance(attrs[a], StateGroupMeta):
                 groups[a] = attrs[a]
-                logger.debug('Found state group: %s' % groups[a].get_name())
+                logger.debug('Found state group: {}'.format(groups[a].get_name()))
 
         # At least one initial state required. (But don't throw error for the
         # base defintion.)
@@ -157,7 +157,7 @@ class StateDefinitionMeta(type):
         """
         if bases != (object,):
             if name.lower() != name and not attrs.get('abstract', False):
-                raise Exception('Please use lowercase names for state definitions (instead of %s)' % name)
+                raise Exception('Please use lowercase names for state definitions (instead of {})'.format(name))
             if not 'description' in attrs and not attrs.get('abstract', False):
                 raise Exception('Please give a description to this state definition')
 
@@ -221,7 +221,11 @@ class StateTransitionMeta(type):
         return type.__new__(c, name, bases, attrs)
 
     def __str__(self):
-        return '%s: (from %s to %s)' % (six.text_type(self.description), ' or '.join(self.from_states), self.to_state)
+        return '{}: (from {} to {})'.format(
+            six.text_type(self.description),
+            ' or '.join(self.from_states),
+            self.to_state
+        )
 
 
 class StateMachine(six.with_metaclass(StateMachineMeta, object)):
@@ -243,26 +247,26 @@ class StateMachine(six.with_metaclass(StateMachineMeta, object)):
             def action(modeladmin, request, queryset):
                 # Dry run first
                 for o in queryset:
-                    get_STATE_info = getattr(o, 'get_%s_info' % field_name)
+                    get_STATE_info = getattr(o, 'get_{}_info'.format(field_name))
                     try:
                         get_STATE_info().test_transition(transition_name,
                                                        request.user)
                     except TransitionException as e:
-                        modeladmin.message_user(request, 'ERROR: %s on: %s' % (e.message, six.text_type(o)),
+                        modeladmin.message_user(request, 'ERROR: {} on: {}'.format(e.message, six.text_type(o)),
                                                 level=messages.ERROR)
                         return
 
                 # Make actual transitions
                 for o in queryset:
-                    get_STATE_info = getattr(o, 'get_%s_info' % field_name)
+                    get_STATE_info = getattr(o, 'get_{}_info'.format(field_name))
                     get_STATE_info().make_transition(transition_name,
                                                    request.user)
 
                 # Feeback
-                modeladmin.message_user(request, 'State changed for %s objects.' % len(queryset))
+                modeladmin.message_user(request, 'State changed for {} objects.'.format(len(queryset)))
 
             action.short_description = six.text_type(cls.transitions[transition_name])
-            action.__name__ = 'state_transition_%s' % transition_name
+            action.__name__ = 'state_transition_{}'.format(transition_name)
             return action
 
         for t in list(cls.transitions.keys()):

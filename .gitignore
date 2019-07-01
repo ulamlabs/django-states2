@@ -46,6 +46,7 @@ local.properties
 ## PyCharm
 ##########
 .idea/
+*.iml
 
 # CDT-specific
 .cproject
