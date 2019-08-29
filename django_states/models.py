@@ -48,7 +48,7 @@ class StateModelBase(ModelBase):
             old_unicode = attrs['__str__']
 
             def new_unicode(self):
-                return '{} ({})'.format((old_unicode(self), self.Machine.get_state(self.state).description))
+                return '{} ({})'.format(old_unicode(self), self.Machine.get_state(self.state).description)
             attrs['__str__'] = new_unicode
 
         # Call class constructor of parent
