@@ -85,7 +85,7 @@ def _create_state_log_model(state_model, field_name, machine):
 
                 def new_unicode(self):
                     """New Unicode"""
-                    return '{} ({})'.format((old_unicode(self), self.get_state_info().description))
+                    return '{} ({})'.format(old_unicode(self), self.get_state_info().description)
 
             attrs['__str__'] = new_unicode
 
