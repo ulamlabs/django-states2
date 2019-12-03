@@ -14,7 +14,7 @@ version: 2
           command: pip install --user tox
       - run:
           name: run tox
-          command: ~/.local/bin/tox -i https://$PYPI_USER:$PYPI_PASS@pypi.mvpl.eu/simple/
+          command: ~/.local/bin/tox
       - save_cache:
           paths:
             - .tox

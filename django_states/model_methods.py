@@ -1,44 +1,47 @@
-# -*- coding: utf-8 -*-
-"""Model Methods"""
-from __future__ import absolute_import
-
 import json
 
-from django_states.exceptions import PermissionDenied, TransitionCannotStart, \
-    TransitionException, TransitionNotValidated, UnknownTransition
+from django_states.exceptions import (
+    PermissionDenied,
+    TransitionCannotStart,
+    TransitionException,
+    TransitionNotValidated,
+    UnknownTransition,
+)
 from django_states.machine import StateMachineMeta
 from django_states.signals import before_state_execute, after_state_execute
 
 
-def get_STATE_transitions(self, field='state'):
+def get_STATE_transitions(self, field="state"):
     """
     Returns state transitions logs.
 
     :param str field: the name of the :class:`~django_states.fields.StateField`
     """
-    if getattr(self, '_{}_log_model'.format(field), None):
-        LogModel = getattr(self, '_{}_log_model'.format(field), None)
+    if getattr(self, "_{}_log_model".format(field), None):
+        LogModel = getattr(self, "_{}_log_model".format(field), None)
         return LogModel.objects.filter(on=self)
     else:
-        raise Exception('This model does not log state transitions. '
-                        'Please enable it by setting log_transitions=True')
+        raise Exception(
+            "This model does not log state transitions. "
+            "Please enable it by setting log_transitions=True"
+        )
 
 
-def get_public_STATE_transitions(self, field='state'):
+def get_public_STATE_transitions(self, field="state"):
     """
     Returns the transitions which are meant to be seen by the customer.
     The admin on the other hand should be able to see everything.
 
     :param str field: the name of the :class:`~django_states.fields.StateField`
     """
-    if getattr(self, '_{}_log_model'.format(field), None):
-        transitions = getattr(self, 'get_{}_transitions'.format(field))
+    if getattr(self, "_{}_log_model".format(field), None):
+        transitions = getattr(self, "get_{}_transitions".format(field))
         return [t for t in transitions() if t.is_public and t.completed]
     else:
         return []
 
 
-def get_STATE_machine(self, field='state', machine=None):
+def get_STATE_machine(self, field="state", machine=None):
     """
     Gets the machine
 
@@ -49,7 +52,7 @@ def get_STATE_machine(self, field='state', machine=None):
     return machine
 
 
-def get_STATE_display(self, field='state', machine=None):
+def get_STATE_display(self, field="state", machine=None):
     """
     Gets the description of the current state from the machine
     """
@@ -62,7 +65,7 @@ def get_STATE_display(self, field='state', machine=None):
     return si.description
 
 
-def get_STATE_info(self, field='state', machine=None):
+def get_STATE_info(self, field="state", machine=None):
     """
     Gets the state definition from the machine
 
@@ -78,6 +81,7 @@ def get_STATE_info(self, field='state', machine=None):
         """
         An extra object that hijacks the actual state methods.
         """
+
         @property
         def name(si_self):
             """
@@ -165,7 +169,7 @@ def get_STATE_info(self, field='state', machine=None):
                 raise UnknownTransition(self, transition)
             t = machine.get_transitions(transition)
 
-            _state_log_model = getattr(self, '_{}_log_model'.format(field), None)
+            _state_log_model = getattr(self, "_{}_log_model".format(field), None)
 
             # Start transition log
             if _state_log_model:
@@ -177,27 +181,31 @@ def get_STATE_info(self, field='state', machine=None):
                     serialized_kwargs = json.dumps(None)
 
                 transition_log = _state_log_model.objects.create(
-                    on=self, from_state=getattr(self, field), to_state=t.to_state,
-                    user=user, serialized_kwargs=serialized_kwargs)
+                    on=self,
+                    from_state=getattr(self, field),
+                    to_state=t.to_state,
+                    user=user,
+                    serialized_kwargs=serialized_kwargs,
+                )
 
             # Test transition (access/execution validation)
             try:
                 si_self.test_transition(transition, user)
             except TransitionException as e:
                 if _state_log_model:
-                    transition_log.make_transition('fail')
+                    transition_log.make_transition("fail")
                 raise e
 
             # Execute
             if _state_log_model:
-                transition_log.make_transition('start')
+                transition_log.make_transition("start")
 
             try:
                 from_state = getattr(self, field)
 
-                before_state_execute.send(sender=self,
-                                          from_state=from_state,
-                                          to_state=t.to_state)
+                before_state_execute.send(
+                    sender=self, from_state=from_state, to_state=t.to_state
+                )
                 # First call handler (handler should still see the original
                 # state.)
                 t.handler(self, user, **kwargs)
@@ -205,17 +213,17 @@ def get_STATE_info(self, field='state', machine=None):
                 # Then set new state and save.
                 setattr(self, field, t.to_state)
                 self.save()
-                after_state_execute.send(sender=self,
-                                         from_state=from_state,
-                                         to_state=t.to_state)
+                after_state_execute.send(
+                    sender=self, from_state=from_state, to_state=t.to_state
+                )
             except Exception as e:
                 if _state_log_model:
-                    transition_log.make_transition('fail')
+                    transition_log.make_transition("fail")
 
                 raise
             else:
                 if _state_log_model:
-                    transition_log.make_transition('complete')
+                    transition_log.make_transition("complete")
 
                 # *After completion*, call the handler of this state
                 # definition

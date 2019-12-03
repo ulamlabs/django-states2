@@ -1,11 +1,19 @@
-# -*- coding: utf-8 -*-
-"""Views"""
-from __future__ import absolute_import
-
-from django.db.models import get_model
-from django.http import (HttpResponseRedirect, HttpResponseForbidden,
-                         HttpResponse,)
+from django.http import (
+    HttpResponseRedirect,
+    HttpResponseForbidden,
+    HttpResponse,
+)
 from django.shortcuts import get_object_or_404
+
+try:
+    from django.apps import apps as django_apps
+
+    def get_model(app_label, model_name):
+        app = django_apps.get_app_config(app_label)
+        return app.get_model(model_name)
+except ImportError:
+    from django.db.models.loading import get_model
+
 
 from django_states.exceptions import PermissionDenied
 
@@ -26,23 +34,23 @@ def make_state_transition(request):
     When the handler requires additional kwargs, they can be passed through as
     optional parameters: ``kwarg-{{ kwargs_name }}``
     """
-    if request.method == 'POST':
+    if request.method == "POST":
         # Process post parameters
-        app_label, model_name = request.POST['model_name'].split('.')
+        app_label, model_name = request.POST["model_name"].split(".")
         try:
             model = get_model(app_label, model_name)
         except LookupError:
             model = None
-        instance = get_object_or_404(model, id=request.POST['id'])
-        action = request.POST['action']
+        instance = get_object_or_404(model, id=request.POST["id"])
+        action = request.POST["action"]
 
         # Build optional kwargs
         kwargs = {}
         for p in request.POST:
-            if p.startswith('kwarg-'):
-                kwargs[p[len('kwargs-')-1:]] = request.POST[p]
+            if p.startswith("kwarg-"):
+                kwargs[p[len("kwargs-") - 1 :]] = request.POST[p]
 
-        if not hasattr(instance, 'make_transition'):
+        if not hasattr(instance, "make_transition"):
             raise Exception('No such state model "{}"'.format(model_name))
 
         try:
@@ -52,9 +60,9 @@ def make_state_transition(request):
             return HttpResponseForbidden()
         else:
             # ... Redirect to 'next'
-            if 'next' in request.POST:
-                return HttpResponseRedirect(request.POST['next'])
+            if "next" in request.POST:
+                return HttpResponseRedirect(request.POST["next"])
             else:
-                return HttpResponse('OK')
+                return HttpResponse("OK")
     else:
         return HttpResponseForbidden()

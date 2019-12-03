@@ -1,26 +1,24 @@
-from __future__ import absolute_import
-from django.template import Node, NodeList, Variable
-from django.template import TemplateSyntaxError, VariableDoesNotExist
+from django.template import Node, Variable
 from django.template import Library
 
 register = Library()
 
 
 class CanMakeTransitionNode(Node):
-    def __init__(self, object, transition_name, nodelist):
-        self.object = object
+    def __init__(self, obj, transition_name, nodelist):
+        self.object = obj
         self.transition_name = transition_name
         self.nodelist = nodelist
 
     def render(self, context):
-        object = Variable(self.object).resolve(context)
+        obj = Variable(self.object).resolve(context)
         transition_name = Variable(self.transition_name).resolve(context)
-        user = Variable('request.user').resolve(context)
+        user = Variable("request.user").resolve(context)
 
-        if user and object.can_make_transition(transition_name, user):
+        if user and obj.can_make_transition(transition_name, user):
             return self.nodelist.render(context)
         else:
-            return ''
+            return ""
 
 
 @register.tag
@@ -39,7 +37,7 @@ def can_make_transition(parser, token):
     args = token.split_contents()
 
     # Read nodelist
-    nodelist = parser.parse(('endcan_make_transition', ))
+    nodelist = parser.parse(("endcan_make_transition",))
     parser.delete_first_token()
 
     # Return meta node
