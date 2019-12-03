@@ -150,5 +150,5 @@ management command.
 This requires `graphviz <http://graphviz.org>`__ and python bindings for
 graphviz: ``pygraphviz`` and ``yapgvb``.
 
-.. |Build Status| image:: https://travis-ci.org/vikingco/django-states2.svg?branch=fix%2F15403%2Fdebug-in_group-and-add-unittests
-   :target: https://travis-ci.org/vikingco/django-states2
+.. |Build Status| image:: https://travis-ci.com/ulamlabs/django-states3.svg?branch=master
+   :target: https://travis-ci.com/ulamlabs/django-states3

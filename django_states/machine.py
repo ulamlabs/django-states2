@@ -1,24 +1,22 @@
-# -*- coding: utf-8 -*-
-"""State Machine"""
-from __future__ import absolute_import
-import six
-
-__all__ = ('StateMachine', 'StateDefinition', 'StateTransition')
-
 from collections import defaultdict
 import logging
 
 from django.contrib import messages
-from django_states.exceptions import (TransitionNotFound, TransitionValidationError,
-                                UnknownState, TransitionException, MachineDefinitionException)
-from django.utils.encoding import python_2_unicode_compatible
+from django_states.exceptions import (
+    TransitionNotFound,
+    TransitionValidationError,
+    UnknownState,
+    TransitionException,
+    MachineDefinitionException,
+)
 
 
 logger = logging.getLogger(__name__)
+__all__ = ("StateMachine", "StateDefinition", "StateTransition")
 
 
 class StateMachineMeta(type):
-    def __new__(c, name, bases, attrs):
+    def __new__(mcs, name, bases, attrs):
         """
         Validate state machine, and make ``states``, ``transitions`` and
         ``initial_state`` attributes available.
@@ -32,35 +30,39 @@ class StateMachineMeta(type):
             # addressable by Machine.states
             if isinstance(attrs[a], StateDefinitionMeta):
                 states[a] = attrs[a]
-                logger.debug('Found state: {}'.format(states[a].get_name()))
+                logger.debug("Found state: {}".format(states[a].get_name()))
                 if states[a].initial:
-                    logger.debug('Found initial state: {}'.format(states[a].get_name()))
+                    logger.debug("Found initial state: {}".format(states[a].get_name()))
                     if not initial_state:
                         initial_state = a
                     else:
-                        raise Exception('Machine defines multiple initial states')
+                        raise Exception("Machine defines multiple initial states")
 
             # All transitions are derived from StateTransition and should be
             # addressable by Machine.transitions
             if isinstance(attrs[a], StateTransitionMeta):
                 transitions[a] = attrs[a]
-                logger.debug('Found state transition: {}'.format(transitions[a].get_name()))
+                logger.debug(
+                    "Found state transition: {}".format(transitions[a].get_name())
+                )
 
             # All definitions derived from StateGroup
             # should be addressable by Machine.groups
             if isinstance(attrs[a], StateGroupMeta):
                 groups[a] = attrs[a]
-                logger.debug('Found state group: {}'.format(groups[a].get_name()))
+                logger.debug("Found state group: {}".format(groups[a].get_name()))
 
         # At least one initial state required. (But don't throw error for the
         # base defintion.)
         if not initial_state and bases != (object,):
-            raise MachineDefinitionException(c, 'Machine does not define initial state')
+            raise MachineDefinitionException(
+                mcs, "Machine does not define initial state"
+            )
 
-        attrs['states'] = states
-        attrs['transitions'] = transitions
-        attrs['initial_state'] = initial_state
-        attrs['groups'] = groups
+        attrs["states"] = states
+        attrs["transitions"] = transitions
+        attrs["initial_state"] = initial_state
+        attrs["groups"] = groups
 
         # Give all state transitions a 'to_state_description' attribute.
         # by copying the description from the state definition. (no
@@ -68,7 +70,7 @@ class StateMachineMeta(type):
         for t in list(transitions.values()):
             t.to_state_description = states[t.to_state].description
 
-        return type.__new__(c, name, bases, attrs)
+        return type.__new__(mcs, name, bases, attrs)
 
     def has_transition(self, transition_name):
         """
@@ -143,92 +145,101 @@ class StateMachineMeta(type):
         result = defaultdict(lambda: False)
         for group in self.groups:
             sg = self.groups[group]
-            if hasattr(sg, 'states'):
+            if hasattr(sg, "states"):
                 result[group] = state_name in sg.states
-            elif hasattr(sg, 'exclude_states'):
-                result[group] = not state_name in sg.exclude_states
+            elif hasattr(sg, "exclude_states"):
+                result[group] = state_name not in sg.exclude_states
         return result
 
 
 class StateDefinitionMeta(type):
-    def __new__(c, name, bases, attrs):
+    def __new__(mcs, name, bases, attrs):
         """
         Validate state definition
         """
         if bases != (object,):
-            if name.lower() != name and not attrs.get('abstract', False):
-                raise Exception('Please use lowercase names for state definitions (instead of {})'.format(name))
-            if not 'description' in attrs and not attrs.get('abstract', False):
-                raise Exception('Please give a description to this state definition')
+            if name.lower() != name and not attrs.get("abstract", False):
+                raise Exception(
+                    "Please use lowercase names for state definitions (instead of {})".format(
+                        name
+                    )
+                )
+            if "description" not in attrs and not attrs.get("abstract", False):
+                raise Exception("Please give a description to this state definition")
 
-        if 'handler' in attrs and len(attrs['handler'].__code__.co_varnames) < 2:
-            raise Exception('StateDefinition handler needs at least two arguments')
+        if "handler" in attrs and len(attrs["handler"].__code__.co_varnames) < 2:
+            raise Exception("StateDefinition handler needs at least two arguments")
 
         # Turn `handler` into classmethod
-        if 'handler' in attrs:
-            attrs['handler'] = classmethod(attrs['handler'])
+        if "handler" in attrs:
+            attrs["handler"] = classmethod(attrs["handler"])
 
-        return type.__new__(c, name, bases, attrs)
+        return type.__new__(mcs, name, bases, attrs)
 
 
 class StateGroupMeta(type):
-    def __new__(c, name, bases, attrs):
+    def __new__(mcs, name, bases, attrs):
         """
         Validate state group definition
         """
         if bases != (object,):
             # check attributes
-            if 'states' in attrs and 'exclude_states' in attrs:
-                raise Exception('Use either states or exclude_states but not both')
-            elif not 'states' in attrs and not 'exclude_states' in attrs:
-                raise Exception('Please specify states or exclude_states to this state group')
+            if "states" in attrs and "exclude_states" in attrs:
+                raise Exception("Use either states or exclude_states but not both")
+            elif "states" not in attrs and "exclude_states" not in attrs:
+                raise Exception(
+                    "Please specify states or exclude_states to this state group"
+                )
             # check type of attributes
-            if 'exclude_states' in attrs and not isinstance(attrs['exclude_states'], (list, set)):
-                raise Exception('Please give a list (or set) of states to this state group')
-            elif 'states' in attrs and not isinstance(attrs['states'], (list, set)):
-                raise Exception('Please give a list (or set) of states to this state group')
+            if "exclude_states" in attrs and not isinstance(
+                attrs["exclude_states"], (list, set)
+            ):
+                raise Exception(
+                    "Please give a list (or set) of states to this state group"
+                )
+            elif "states" in attrs and not isinstance(attrs["states"], (list, set)):
+                raise Exception(
+                    "Please give a list (or set) of states to this state group"
+                )
 
-        return type.__new__(c, name, bases, attrs)
+        return type.__new__(mcs, name, bases, attrs)
 
 
-@python_2_unicode_compatible
 class StateTransitionMeta(type):
-    def __new__(c, name, bases, attrs):
+    def __new__(mcs, name, bases, attrs):
         """
         Validate state transition definition
         """
         if bases != (object,):
-            if 'from_state' in attrs and 'from_states' in attrs:
-                raise Exception('Please use either from_state or from_states')
-            if 'from_state' in attrs:
-                attrs['from_states'] = (attrs['from_state'],)
-                del attrs['from_state']
-            if not 'from_states' in attrs:
-                raise Exception('Please give a from_state to this state transition')
-            if not 'to_state' in attrs:
-                raise Exception('Please give a from_state to this state transition')
-            if not 'description' in attrs:
-                raise Exception('Please give a description to this state transition')
+            if "from_state" in attrs and "from_states" in attrs:
+                raise Exception("Please use either from_state or from_states")
+            if "from_state" in attrs:
+                attrs["from_states"] = (attrs["from_state"],)
+                del attrs["from_state"]
+            if "from_states" not in attrs:
+                raise Exception("Please give a from_state to this state transition")
+            if "to_state" not in attrs:
+                raise Exception("Please give a from_state to this state transition")
+            if "description" not in attrs:
+                raise Exception("Please give a description to this state transition")
 
-        if 'handler' in attrs and len(attrs['handler'].__code__.co_varnames) < 3:
-            raise Exception('StateTransition handler needs at least three arguments')
+        if "handler" in attrs and len(attrs["handler"].__code__.co_varnames) < 3:
+            raise Exception("StateTransition handler needs at least three arguments")
 
         # Turn `has_permission` and `handler` into classmethods
-        for m in ('has_permission', 'handler', 'validate'):
+        for m in ("has_permission", "handler", "validate"):
             if m in attrs:
                 attrs[m] = classmethod(attrs[m])
 
-        return type.__new__(c, name, bases, attrs)
+        return type.__new__(mcs, name, bases, attrs)
 
     def __str__(self):
-        return '{}: (from {} to {})'.format(
-            six.text_type(self.description),
-            ' or '.join(self.from_states),
-            self.to_state
+        return "{}: (from {} to {})".format(
+            self.description, " or ".join(self.from_states), self.to_state,
         )
 
 
-class StateMachine(six.with_metaclass(StateMachineMeta, object)):
+class StateMachine(object, metaclass=StateMachineMeta):
     """
     Base class for a state machine definition
     """
@@ -237,7 +248,7 @@ class StateMachine(six.with_metaclass(StateMachineMeta, object)):
     log_transitions = True
 
     @classmethod
-    def get_admin_actions(cls, field_name='state'):
+    def get_admin_actions(cls, field_name="state"):
         """
         Creates a list of actions for use in the Django Admin.
         """
@@ -247,26 +258,29 @@ class StateMachine(six.with_metaclass(StateMachineMeta, object)):
             def action(modeladmin, request, queryset):
                 # Dry run first
                 for o in queryset:
-                    get_STATE_info = getattr(o, 'get_{}_info'.format(field_name))
+                    get_STATE_info = getattr(o, "get_{}_info".format(field_name))
                     try:
-                        get_STATE_info().test_transition(transition_name,
-                                                       request.user)
+                        get_STATE_info().test_transition(transition_name, request.user)
                     except TransitionException as e:
-                        modeladmin.message_user(request, 'ERROR: {} on: {}'.format(e.message, six.text_type(o)),
-                                                level=messages.ERROR)
+                        modeladmin.message_user(
+                            request,
+                            "ERROR: {} on: {}".format(e.message, str(o)),
+                            level=messages.ERROR,
+                        )
                         return
 
                 # Make actual transitions
                 for o in queryset:
-                    get_STATE_info = getattr(o, 'get_{}_info'.format(field_name))
-                    get_STATE_info().make_transition(transition_name,
-                                                   request.user)
+                    get_STATE_info = getattr(o, "get_{}_info".format(field_name))
+                    get_STATE_info().make_transition(transition_name, request.user)
 
                 # Feeback
-                modeladmin.message_user(request, 'State changed for {} objects.'.format(len(queryset)))
+                modeladmin.message_user(
+                    request, "State changed for {} objects.".format(len(queryset))
+                )
 
-            action.short_description = six.text_type(cls.transitions[transition_name])
-            action.__name__ = 'state_transition_{}'.format(transition_name)
+            action.short_description = str(cls.transitions[transition_name])
+            action.__name__ = "state_transition_{}".format(transition_name)
             return action
 
         for t in list(cls.transitions.keys()):
@@ -282,7 +296,7 @@ class StateMachine(six.with_metaclass(StateMachineMeta, object)):
         return [(k, cls.states[k].description) for k in list(cls.states.keys())]
 
 
-class StateDefinition(six.with_metaclass(StateDefinitionMeta, object)):
+class StateDefinition(object, metaclass=StateDefinitionMeta):
     """
     Base class for a state definition
     """
@@ -291,7 +305,7 @@ class StateDefinition(six.with_metaclass(StateDefinitionMeta, object)):
     # define at least one state where ``initial=True``
     initial = False
 
-    def handler(cls, instance):
+    def handler(self, instance):
         """
         Override this method if some specific actions need
         to be executed *after arriving* in this state.
@@ -306,13 +320,13 @@ class StateDefinition(six.with_metaclass(StateDefinitionMeta, object)):
         return cls.__name__
 
 
-class StateGroup(six.with_metaclass(StateGroupMeta, object)):
+class StateGroup(object, metaclass=StateGroupMeta):
     """
     Base class for a state groups
     """
 
     #: Description for this state group
-    description = ''
+    description = ""
 
     @classmethod
     def get_name(cls):
@@ -322,7 +336,7 @@ class StateGroup(six.with_metaclass(StateGroupMeta, object)):
         return cls.__name__
 
 
-class StateTransition(six.with_metaclass(StateTransitionMeta, object)):
+class StateTransition(object, metaclass=StateTransitionMeta):
     """
     Base class for a state transitions
     """
@@ -331,7 +345,7 @@ class StateTransition(six.with_metaclass(StateTransitionMeta, object)):
     #: by the end-user.
     public = False
 
-    def has_permission(cls, instance, user):
+    def has_permission(self, instance, user):
         """
         Check whether this user is allowed to execute this state transition on
         this object. You can override this function for every StateTransition.
@@ -340,7 +354,7 @@ class StateTransition(six.with_metaclass(StateTransitionMeta, object)):
         # By default, only superusers are allowed to execute this transition.
         # Note that this is the only permission checking for the POST views.
 
-    def validate(cls, instance):
+    def validate(self, instance):
         """
         Validates whether this object is valid to make this state transition.
 
@@ -349,12 +363,12 @@ class StateTransition(six.with_metaclass(StateTransitionMeta, object)):
         override this function for every StateTransition.
         """
         if False:
-            yield TransitionValidationError('Example error')  # pragma: no cover
+            yield TransitionValidationError("Example error")  # pragma: no cover
         # Don't use the 'raise'-statement in here, just yield all the errors.
         # yield TransitionValidationError("This object needs ....")
         # yield TransitionValidationError("Another error ....")
 
-    def handler(cls, instance, user):
+    def handler(self, instance, user):
         """
         Override this method if some specific actions need
         to be executed during this state transition.
