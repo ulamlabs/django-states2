@@ -15,7 +15,7 @@ Installation
 
 .. code:: sh
 
-    pip install django-states2
+    pip install django-states3
 
 Usage example
 -------------
